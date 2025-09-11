@@ -1,0 +1,55 @@
+.login {
+    background-color:rgba(240, 248, 255, 0.505) ;
+    width: 25% ;
+    margin: 50px auto;
+    padding: 40px;
+    border-radius: 5px;
+    
+    box-shadow: 1px 1px 8px rgba(0,0,0,0.065);
+}
+
+.logform .input{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.logform .input label{
+    margin-top: 5px ;
+}
+
+.logform .input input{
+    margin-bottom: 5px ;
+    padding: 10px ;
+}
+
+.login .input button{
+    margin-top: 20px;
+}
+
+.login h2{
+    margin-top: 30px ;
+    text-align: center;
+    font-weight: bold;
+    color: rgb(109, 0, 0);
+    text-transform: uppercase;
+    text-shadow: 1px 1px 8px rgba(0,0,0,0.065);
+
+}
+
+.login .btn.btn-danger {
+  display: block;
+}
+
+.login p1{
+    margin-top: 30px ;
+    text-align: left;
+    color: rgb(0, 0, 0);
+    text-shadow: 1px 1px 8px rgba(0,0,0,0.065);
+
+}
+
+.login .btn.btn-secondary {
+  display: block;
+}
+

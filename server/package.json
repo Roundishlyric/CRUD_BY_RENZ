@@ -1,0 +1,25 @@
+{
+  "name": "dbtest",
+  "version": "1.0.0",
+  "description": "testing",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "renz",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "font-awesome": "^4.7.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.0"
+  },
+  "devDependencies": {
+    "jest": "^30.1.1",
+    "nodemon": "^3.1.10"
+  }
+}

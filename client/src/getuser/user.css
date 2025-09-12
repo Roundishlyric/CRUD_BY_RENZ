@@ -10,6 +10,11 @@
 .userTable table{
     width: 100% ;
     margin: 30px;
+    background-color: gray;
+}
+
+.userTable .name-panel{
+    background-color: rgb(58, 58, 58);
 }
 
 .userTable button{

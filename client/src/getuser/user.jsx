@@ -75,11 +75,11 @@ const User = () => {
       <table className="table table-bordered mt-3">
         <thead>
           <tr>
-            <th scope="col">Serial Number</th>
-            <th scope="col">Name</th>
-            <th scope="col">Email</th>
-            <th scope="col">Address</th>
-            <th scope="col">Actions</th>
+            <th scope="col" className="name-panel" >Serial Number</th>
+            <th scope="col" className="name-panel">Name</th>
+            <th scope="col" className="name-panel">Email</th>
+            <th scope="col" className="name-panel">Address</th>
+            <th scope="col" className="name-panel">Actions</th>
           </tr>
         </thead>
         <tbody>

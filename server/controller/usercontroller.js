@@ -2,8 +2,9 @@ import User from "../model/userModel.js";
 import regis from "../model/logmodel.js"
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import bcrypt from "bcrypt";  
 
-dotenv.config()
+dotenv.config();
 
 // REGISTER USER
 export const register = async (req, res) => {
@@ -21,8 +22,12 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    // create new user
-    const newLog = new regis({ name, email, password });
+    // ✅ hash the password before saving
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // create new user with hashed password
+    const newLog = new regis({ name, email, password: hashedPassword });
     const savedData = await newLog.save();
 
     // generate access token
@@ -34,11 +39,11 @@ export const register = async (req, res) => {
 
     res.status(201).json({
       message: "User registered successfully",
-      user: savedData,
+      user: { id: savedData._id, name: savedData.name, email: savedData.email }, // ✅ don't return password
       accessToken,
     });
   } catch (error) {
-    res.status(500).json({ errorMessage:error.message })
+    res.status(500).json({ errorMessage: error.message });
   }
 };
 
@@ -53,8 +58,9 @@ export const login = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    // check password ( in production use bcrypt instead of plain text)
-    if (user.password !== password) {
+    // ✅ compare password with hashed password
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
       return res.status(401).json({ message: "Invalid credentials." });
     }
 
@@ -67,13 +73,14 @@ export const login = async (req, res) => {
 
     res.status(200).json({
       message: "Login successful",
-      user,
+      user: { id: user._id, name: user.name, email: user.email },
       accessToken,
     });
   } catch (error) {
     res.status(500).json({ errorMessage: error.message });
   }
 };
+
 
 // ADD USER
 export const create = async(req, res) =>{

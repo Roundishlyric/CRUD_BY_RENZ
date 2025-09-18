@@ -14,6 +14,8 @@ function Signup(){
     const handleSubmit = (e) => {
     e.preventDefault()
 
+
+  //FORM CHECKER
     if (!name || !email || !password) {
     toast.error("All fields are required!", { position: "top-right" });
     return;
@@ -23,7 +25,14 @@ function Signup(){
       toast.error("Email must include '@'", { position: "top-right" });
       return;
     }
+    
+    if (password.length < 6) {
+    toast.error("Password must be at least 6 characters long!", { position: "top-right" });
+    return;
+  }
+  
 
+  //POST IN BACKEND
       axios.post('http://localhost:8000/api/user/registrar',{name, email, password})
       .then(result => {console.log(result)
 

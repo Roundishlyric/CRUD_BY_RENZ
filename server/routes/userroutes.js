@@ -1,18 +1,27 @@
-import express from "express"
+import express from "express";
+import {
+  create,
+  deleteUser,
+  getallusers,
+  getuserID,
+  login,
+  register,
+  update,
+} from "../controller/usercontroller.js";
 
-import {create, deleteUser, getallusers, getuserID, login, register, update} from "../controller/usercontroller.js"
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 const route = express.Router();
 
-//AUTHORIZATION
-route.post("/registrar",register)
-route.post("/login",login)
+// AUTH
+route.post("/registrar", register);
+route.post("/login", login);
 
-//CRUD
-route.post("/register",create);
-route.get("/users",getallusers);
-route.get("/users/:id",getuserID);
-route.put("/update/user/:id",update);
-route.delete("/delete/user/:id",deleteUser);
+// PROTECTED CRUD ROUTES
+route.post("/register", verifyToken, create);
+route.get("/users", verifyToken, getallusers);
+route.get("/users/:id", verifyToken, getuserID);
+route.put("/update/user/:id", verifyToken, update);
+route.delete("/delete/user/:id", verifyToken, deleteUser);
 
 export default route;

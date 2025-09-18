@@ -19,28 +19,65 @@ const User = () => {
     //FETCH USERS FOR TABLE
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/api/user/users");
-        setUsers(response.data);
+       const token = localStorage.getItem("token");
+       console.log("Token being sent:", token); // debug
+
+       const response = await axios.get("http://localhost:8000/api/user/users", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+         },
+        });
+
+       setUsers(response.data);
       } catch (error) {
         console.log("Error while fetching data.", error);
-      }
+     }
     };
-    fetchData();
-  }, []);
 
-  const deleteUser = async (userID) => {
-    try {
-      const response = await axios.delete(
-        `http://localhost:8000/api/user/delete/user/${userID}`
-      );
-      setUsers((prevUser) => prevUser.filter((user) => user._id !== userID));
-      toast.success(response.data.message, { position: "top-right" });
-    } catch (error) {
-      console.log(error);
+    fetchData();
+  },
+   []);
+
+const deleteUser = async (userID) => {
+  try {
+
+    const confirmDelete = window.confirm("Are you sure you want to delete this user?");
+    if (!confirmDelete) return;
+
+    const token = localStorage.getItem("token"); // get token
+
+    const response = await axios.delete(
+      `http://localhost:8000/api/user/delete/user/${userID}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // send token
+        },
+      }
+    );
+
+    setUsers((prevUser) => prevUser.filter((user) => user._id !== userID));
+    toast.success(response.data.message, { position: "top-right" });
+  } catch (error) {
+    if (error.response?.status === 403) {
+      toast.error("Unauthorized. Please log in again.", {
+        position: "top-right",
+      });
+      navigate("/"); // redirect to login
+    } else {
+      toast.error("Something went wrong while deleting.", {
+        position: "top-right",
+      });
     }
-  };
+    console.log(error);
+  }
+};
+
 
   const handleLogout = () => {
+
+    const confirmDelete = window.confirm("Are you sure you want to log out?");
+    if (!confirmDelete) return;
+
     //clear user data
     localStorage.removeItem("user");
     localStorage.removeItem("token");

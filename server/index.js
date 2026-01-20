@@ -10,10 +10,7 @@ dotenv.config();
 const app = express();
 
 app.use(express.json())
-app.use(cors({
-        origins: "http://localhost:3000",
-    credentials: true,
-}));
+app.use(cors({ origins: "http://localhost:3000", credentials: true }));
 app.use(bodyParser.json());
 
 

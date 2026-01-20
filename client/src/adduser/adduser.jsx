@@ -12,63 +12,100 @@ const AddUser = () => {
   });
 
   const navigate = useNavigate();
+  const API_BASE = "http://localhost:8000";
+
+  // ✅ Prevent Bearer undefined/null
+  const getTokenOrRedirect = () => {
+    const token = localStorage.getItem("token");
+    if (!token || token === "undefined" || token === "null") {
+      toast.error("Session expired. Please log in again.", {
+        position: "top-right",
+      });
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      navigate("/");
+      return null;
+    }
+    return token;
+  };
 
   const inputhandler = (e) => {
     const { name, value } = e.target;
-    setUser({ ...user, [name]: value });
+    setUser((prev) => ({ ...prev, [name]: value }));
   };
 
-const submitform = async (e) => {
-  e.preventDefault();
+  const submitform = async (e) => {
+    e.preventDefault();
 
-  if (!user.name || !user.email || !user.address) {
-    toast.error("Please fill out all fields before submitting.", {
-      position: "top-right",
-    });
-    return;
-  }
+    // ✅ Frontend validation
+    if (!user.name || !user.email || !user.address) {
+      toast.error("Please fill out all fields before submitting.", {
+        position: "top-right",
+      });
+      return;
+    }
 
-  if (!user.email.includes("@")) {
-    toast.error("Email must include '@'", { position: "top-right" });
-    return;
-  }
+    if (!user.email.includes("@")) {
+      toast.error("Email must include '@'", { position: "top-right" });
+      return;
+    }
 
-// confirmation
-    const confirmCreate = window.confirm("Are you sure you want to create this user?");
+    const confirmCreate = window.confirm(
+      "Are you sure you want to create this user?"
+    );
     if (!confirmCreate) return;
 
-  try {
-    const token = localStorage.getItem("token"); //  token from storage
+    try {
+      const token = getTokenOrRedirect();
+      if (!token) return;
 
-    const response = await axios.post(
-      "http://localhost:8000/api/user/register",
-      user,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // send token
-        },
+      const response = await axios.post(
+        `${API_BASE}/api/user/register`,
+        user,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success(response.data?.message || "User created successfully!", {
+        position: "top-right",
+      });
+
+      navigate("/user");
+    } catch (error) {
+      const status = error.response?.status;
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Something went wrong. Try again.";
+
+      // ✅ Debug logs (safe to keep during dev)
+      console.log("ADD USER STATUS:", status);
+      console.log("ADD USER RESPONSE:", error.response?.data);
+
+      // ✅ Handle auth failures
+      if ([401, 403].includes(status)) {
+        toast.error("Unauthorized. Please log in again.", {
+          position: "top-right",
+        });
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/");
+        return;
       }
-    );
 
-    toast.success(response.data.message, { position: "top-right" });
-    navigate("/user");
-  } catch (error) {
-    if (error.response && error.response.status === 400) {
-      toast.error(error.response.data.message, { position: "top-right" });
-    } else if (error.response && error.response.status === 403) {
-      toast.error("Unauthorized. Please log in again.", {
-        position: "top-right",
-      });
-      navigate("/"); // redirect to login
-    } else {
-      toast.error("Something went wrong. Try again.", {
-        position: "top-right",
-      });
+      // ✅ Show backend validation errors (400)
+      if (status === 400) {
+        toast.error(message, { position: "top-right" });
+        return;
+      }
+
+      toast.error(message, { position: "top-right" });
     }
-  }
-};
+  };
 
-  //FORM DESIGN
   return (
     <div className="addUser">
       <Link to="/user" type="button" className="btn btn-secondary">

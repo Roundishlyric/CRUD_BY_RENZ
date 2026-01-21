@@ -14,7 +14,9 @@ const User = () => {
   const getTokenOrRedirect = () => {
     const token = localStorage.getItem("token");
     if (!token || token === "undefined" || token === "null") {
-      toast.error("Session expired. Please log in again.", { position: "top-right" });
+      toast.error("Session expired. Please log in again.", {
+        position: "top-right",
+      });
       localStorage.removeItem("user");
       localStorage.removeItem("token");
       navigate("/");
@@ -24,6 +26,7 @@ const User = () => {
   };
 
   useEffect(() => {
+    // Load logged-in user
     const storedUser = localStorage.getItem("user");
 
     if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
@@ -39,6 +42,7 @@ const User = () => {
       setCurrentUser(null);
     }
 
+    // Fetch users list
     const fetchData = async () => {
       try {
         const token = getTokenOrRedirect();
@@ -48,21 +52,28 @@ const User = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // ✅ backend returns { result: [...] }
+        // backend returns { result: [...] }
         setUsers(response.data?.result || []);
       } catch (error) {
         const status = error.response?.status;
 
         if ([401, 403].includes(status)) {
-          toast.error("Unauthorized. Please log in again.", { position: "top-right" });
+          toast.error("Unauthorized. Please log in again.", {
+            position: "top-right",
+          });
           localStorage.removeItem("user");
           localStorage.removeItem("token");
           navigate("/");
           return;
         }
 
-        toast.error("Error while fetching users.", { position: "top-right" });
-        console.log("Error while fetching data.", error.response?.data || error);
+        const message =
+          error.response?.data?.message ||
+          error.message ||
+          "Error while fetching users.";
+
+        toast.error(message, { position: "top-right" });
+        console.log("Error while fetching data:", status, error.response?.data || error);
       }
     };
 
@@ -71,31 +82,45 @@ const User = () => {
 
   const deleteUser = async (userID) => {
     try {
-      const confirmDelete = window.confirm("Are you sure you want to delete this user?");
+      const confirmDelete = window.confirm(
+        "Are you sure you want to delete this user?"
+      );
       if (!confirmDelete) return;
 
       const token = getTokenOrRedirect();
       if (!token) return;
 
-      const response = await axios.delete(`${API_BASE}/api/user/delete/user/${userID}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.delete(
+        `${API_BASE}/api/user/delete/user/${userID}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       setUsers((prev) => prev.filter((u) => u._id !== userID));
-      toast.success(response.data?.message || "User deleted.", { position: "top-right" });
+      toast.success(response.data?.message || "User deleted.", {
+        position: "top-right",
+      });
     } catch (error) {
       const status = error.response?.status;
 
       if ([401, 403].includes(status)) {
-        toast.error("Unauthorized. Please log in again.", { position: "top-right" });
+        toast.error("Unauthorized. Please log in again.", {
+          position: "top-right",
+        });
         localStorage.removeItem("user");
         localStorage.removeItem("token");
         navigate("/");
         return;
       }
 
-      toast.error("Something went wrong while deleting.", { position: "top-right" });
-      console.log(error.response?.data || error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Something went wrong while deleting.";
+
+      toast.error(message, { position: "top-right" });
+      console.log("Delete error:", status, error.response?.data || error);
     }
   };
 
@@ -106,30 +131,65 @@ const User = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
 
-    toast.success("You have logged out successfully!", { position: "top-right" });
+    toast.success("You have logged out successfully!", {
+      position: "top-right",
+    });
     navigate("/");
   };
 
   return (
     <div className="userTable">
-      {currentUser && <h1 className="head">Greetings, {currentUser.name}</h1>}
+      {/* Header row: left buttons, centered greeting, right syslogs */}
+      <div className="d-flex align-items-center mb-4">
+        {/* LEFT */}
+        <div>
+          <button
+            onClick={handleLogout}
+            type="button"
+            className="btn btn-danger me-2"
+          >
+            Log Out <i className="fa-solid fa-right-from-bracket"></i>
+          </button>
 
-      <button onClick={handleLogout} type="button" className="btn btn-danger me-3">
-        Log Out <i className="fa-solid fa-right-from-bracket"></i>
-      </button>
+          <Link to="/add" type="button" className="btn btn-danger">
+            Add User <i className="fa-solid fa-user-plus"></i>
+          </Link>
+        </div>
 
-      <Link to="/add" type="button" className="btn btn-danger">
-        Add User <i className="fa-solid fa-user-plus"></i>
-      </Link>
+        {/* CENTER */}
+        <div className="flex-grow-1 text-center">
+          {currentUser?.name && (
+            <h1 className="head mb-0">Greetings, {currentUser.name}</h1>
+          )}
+        </div>
 
+        {/* RIGHT */}
+        <div>
+          <Link to="/syslogs" type="button" className="btn btn-secondary">
+            System Logs
+          </Link>
+        </div>
+      </div>
+
+      {/* Table */}
       <table className="table table-bordered mt-3">
         <thead>
           <tr>
-            <th scope="col" className="name-panel">Serial Number</th>
-            <th scope="col" className="name-panel">Name</th>
-            <th scope="col" className="name-panel">Email</th>
-            <th scope="col" className="name-panel">Address</th>
-            <th scope="col" className="name-panel">Actions</th>
+            <th scope="col" className="name-panel">
+              Serial Number
+            </th>
+            <th scope="col" className="name-panel">
+              Name
+            </th>
+            <th scope="col" className="name-panel">
+              Email
+            </th>
+            <th scope="col" className="name-panel">
+              Address
+            </th>
+            <th scope="col" className="name-panel">
+              Actions
+            </th>
           </tr>
         </thead>
 
@@ -141,10 +201,18 @@ const User = () => {
               <td>{u.email}</td>
               <td>{u.address}</td>
               <td className="actionbuttons">
-                <Link to={`/update/${u._id}`} type="button" className="btn btn-danger">
+                <Link
+                  to={`/update/${u._id}`}
+                  type="button"
+                  className="btn btn-danger"
+                >
                   <i className="fa-solid fa-pen-to-square"></i>
                 </Link>
-                <button onClick={() => deleteUser(u._id)} type="button" className="btn btn-dark ms-2">
+                <button
+                  onClick={() => deleteUser(u._id)}
+                  type="button"
+                  className="btn btn-dark ms-2"
+                >
                   <i className="fa-solid fa-trash"></i>
                 </button>
               </td>

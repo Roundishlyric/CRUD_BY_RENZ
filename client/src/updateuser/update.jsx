@@ -13,81 +13,108 @@ const UpdateUser = () => {
 
   const navigate = useNavigate();
   const { id } = useParams();
+  const API_BASE = "http://localhost:8000";
 
-  // fetch existing user data
-useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      const token = localStorage.getItem("token"); // get token
-      const res = await axios.get(
-        `http://localhost:8000/api/user/users/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // send token
-          },
-        }
-      );
-      setUser(res.data);
-    } catch (err) {
-      toast.error("Failed to load user data", { position: "top-right" });
+  const getTokenOrRedirect = () => {
+    const token = localStorage.getItem("token");
+    if (!token || token === "undefined" || token === "null") {
+      toast.error("Session expired. Please log in again.", { position: "top-right" });
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      navigate("/");
+      return null;
     }
+    return token;
   };
-  fetchUser();
-}, [id]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = getTokenOrRedirect();
+        if (!token) return;
+
+        const res = await axios.get(`${API_BASE}/api/user/users/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // ✅ your backend returns { result: user }
+        setUser(res.data?.result || { name: "", email: "", address: "" });
+      } catch (err) {
+        const status = err.response?.status;
+
+        if ([401, 403].includes(status)) {
+          toast.error("Unauthorized. Please log in again.", { position: "top-right" });
+          localStorage.removeItem("user");
+          localStorage.removeItem("token");
+          navigate("/");
+          return;
+        }
+
+        console.log("FETCH USER ERROR:", err.response?.data || err);
+        toast.error("Failed to load user data", { position: "top-right" });
+      }
+    };
+
+    fetchUser();
+  }, [id, navigate]);
 
   const inputhandler = (e) => {
     const { name, value } = e.target;
-    setUser({ ...user, [name]: value });
+    setUser((prev) => ({ ...prev, [name]: value }));
   };
 
-// update form submit
-const submitform = async (e) => {
-  e.preventDefault();
+  const submitform = async (e) => {
+    e.preventDefault();
 
-  if (!user.name || !user.email || !user.address) {
-    toast.error("Please fill out all fields before submitting.", {
-      position: "top-right",
-    });
-    return;
-  }
-
-  if (!user.email.includes("@")) {
-    toast.error("Email must include '@'", { position: "top-right" });
-    return;
-  }
-
-// confirmation
-    const confirmCreate = window.confirm("Are you sure you want to update this user?");
-    if (!confirmCreate) return;
-
-  try {
-    const token = localStorage.getItem("token"); // ✅ get token
-    const response = await axios.put(
-      `http://localhost:8000/api/user/update/user/${id}`,
-      user,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // ✅ send token
-        },
-      }
-    );
-    toast.success(response.data.message, { position: "top-right" });
-    navigate("/user");
-  } catch (error) {
-    if (error.response && error.response.status === 400) {
-      toast.error(error.response.data.message, { position: "top-right" });
-    } else if (error.response && error.response.status === 403) {
-      toast.error("Unauthorized. Please log in again.", {
-        position: "top-right",
-      });
-      navigate("/");
-    } else {
-      toast.error("Something went wrong. Try again.", {
-        position: "top-right",
-      });
+    if (!user.name || !user.email || !user.address) {
+      toast.error("Please fill out all fields before submitting.", { position: "top-right" });
+      return;
     }
-  }
-};
+
+    if (!user.email.includes("@")) {
+      toast.error("Email must include '@'", { position: "top-right" });
+      return;
+    }
+
+    const confirmUpdate = window.confirm("Are you sure you want to update this user?");
+    if (!confirmUpdate) return;
+
+    try {
+      const token = getTokenOrRedirect();
+      if (!token) return;
+
+      const response = await axios.put(
+        `${API_BASE}/api/user/update/user/${id}`,
+        {
+          name: user.name,
+          email: user.email,
+          address: user.address,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      toast.success(response.data?.message || "User updated successfully.", {
+        position: "top-right",
+      });
+      navigate("/user");
+    } catch (error) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message || "Something went wrong. Try again.";
+
+      if ([401, 403].includes(status)) {
+        toast.error("Unauthorized. Please log in again.", { position: "top-right" });
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/");
+        return;
+      }
+
+      toast.error(message, { position: "top-right" });
+      console.log("UPDATE ERROR:", error.response?.data || error);
+    }
+  };
 
   return (
     <div className="addUser">

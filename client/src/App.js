@@ -5,6 +5,8 @@ import User from './getuser/user';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Update from './updateuser/update.jsx';
 import Login from './login/login.jsx';
+import Syslogs from './syslog/syslog';
+
 
 function App() {
   const route = createBrowserRouter([
@@ -27,6 +29,10 @@ function App() {
     {
       path: "/update/:id",
       element:<Update />
+    },
+    {
+      path: "/syslogs",
+      element:<Syslogs />
     },
     {
       path:"/register",

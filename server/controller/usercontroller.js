@@ -1,31 +1,44 @@
 import User from "../model/userModel.js";
 import regis from "../model/logmodel.js";
+import AuditLog from "../model/auditLogModel.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 
 dotenv.config();
 
-// REGISTER USER
+const writeAudit = async ({ model, recordId, action, req, before, after }) => {
+  try {
+    await AuditLog.create({
+      model,
+      recordId,
+      action,
+      actorId: req.user?.id || null,
+      actorEmail: req.user?.email || null,
+      before: before || null,
+      after: after || null,
+      at: new Date(),
+    });
+  } catch (e) {
+    // Don’t crash the request if logging fails
+    console.log("Audit log write failed:", e.message);
+  }
+};
+
+// REGISTER USER (unchanged)
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // check if user exists
     const userExist = await regis.findOne({ email });
     if (userExist) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Email already exists." });
+      return res.status(400).json({ success: false, message: "Email already exists." });
     }
 
     if (!name || !email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "All fields are required." });
+      return res.status(400).json({ success: false, message: "All fields are required." });
     }
 
-    // hash the password before saving
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -49,22 +62,19 @@ export const register = async (req, res) => {
   }
 };
 
-// LOGIN USER
+// LOGIN USER (unchanged)
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const user = await regis.findOne({ email });
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found." });
+      return res.status(404).json({ success: false, message: "User not found." });
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Invalid credentials." });
+      return res.status(401).json({ success: false, message: "Invalid credentials." });
     }
 
     const accessToken = jwt.sign(
@@ -79,125 +89,161 @@ export const login = async (req, res) => {
       result: { id: user._id, name: user.name, email: user.email },
       accessToken,
     });
-
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ADD USER
+// ADD USER (CREATE) + AUDIT
 export const create = async (req, res) => {
   try {
     const newUser = new User(req.body);
     const { email } = newUser;
 
-    const existingUser = await User.findOne({ email });
+    // only block duplicates among ACTIVE users
+    const existingUser = await User.findOne({ email, isDeleted: false });
     if (existingUser) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Email already exists!" });
+      return res.status(400).json({ success: false, message: "Email already exists!" });
     }
 
     const savedData = await newUser.save();
+
+    await writeAudit({
+      model: "Users",
+      recordId: savedData._id,
+      action: "CREATE",
+      req,
+      before: null,
+      after: savedData.toObject(),
+    });
+
     res.status(200).json({
-        success: true,
-        message: "User created successfully.",
-        result: savedData,
+      success: true,
+      message: "User created successfully.",
+      result: savedData,
     });
   } catch (error) {
-    res.status(500).json({ 
-        success: false, 
-        message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
+// SHOW USERS (HIDE DELETED)
 // SHOW USERS
 export const getallusers = async (req, res) => {
   try {
-    const userData = await User.find();
-    if (!userData || userData.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User data not found." });
-    }
-    res.status(200).json({
+    // if you implemented soft delete, keep { isDeleted: false }
+    // otherwise use User.find()
+    const userData = await User.find({ isDeleted: false });
+
+    // ✅ DO NOT return 404 when empty
+    return res.status(200).json({
       success: true,
       message: "Users fetched successfully",
-      result: userData,
+      result: userData, // [] is OK
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// SPECIFIC ID
+
+// SPECIFIC ID (ONLY IF NOT DELETED)
 export const getuserID = async (req, res) => {
   try {
     const id = req.params.id;
-    const userExist = await User.findById(id);
+
+    const userExist = await User.findOne({ _id: id, isDeleted: false });
     if (!userExist) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found." });
+      return res.status(404).json({ success: false, message: "User not found." });
     }
+
     res.status(200).json({
       success: true,
       message: "User fetched successfully",
       result: userExist,
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// UPDATE USER
+// UPDATE USER + AUDIT
 export const update = async (req, res) => {
   try {
     const id = req.params.id;
-    const userExist = await User.findById(id);
-    if (!userExist) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found." });
+
+    const beforeDoc = await User.findOne({ _id: id, isDeleted: false });
+    if (!beforeDoc) {
+      return res.status(404).json({ success: false, message: "User not found." });
     }
-    const updateddata = await User.findByIdAndUpdate(id, req.body, { new: true });
+
+    const updateddata = await User.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    await writeAudit({
+      model: "Users",
+      recordId: updateddata._id,
+      action: "UPDATE",
+      req,
+      before: beforeDoc.toObject(),
+      after: updateddata.toObject(),
+    });
+
     res.status(200).json({
       success: true,
       message: "User updated successfully.",
       result: updateddata,
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// DELETE USER
+// DELETE USER (SOFT DELETE) + AUDIT
 export const deleteUser = async (req, res) => {
   try {
     const id = req.params.id;
-    const userExist = await User.findById(id);
+
+    const userExist = await User.findOne({ _id: id, isDeleted: false });
     if (!userExist) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found." });
+      return res.status(404).json({ success: false, message: "User not found." });
     }
-    await User.findByIdAndDelete(id);
+
+    const beforeSnapshot = userExist.toObject();
+
+    userExist.isDeleted = true;
+    userExist.deletedAt = new Date();
+    userExist.deletedBy = req.user?.id || null;
+
+    await userExist.save();
+
+    await writeAudit({
+      model: "Users",
+      recordId: userExist._id,
+      action: "DELETE",
+      req,
+      before: beforeSnapshot,
+      after: userExist.toObject(),
+    });
+
     res.status(200).json({
       success: true,
-      message: "User deleted successfully.",
+      message: "User soft-deleted successfully.",
       result: { id },
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// SYSTEM LOGS (AUDIT TRAILS)
+export const getSystemLogs = async (req, res) => {
+  try {
+    const logs = await AuditLog.find().sort({ at: -1 }).limit(200);
+    res.status(200).json({ success: true, result: logs });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -7,6 +7,7 @@ import {
   login,
   register,
   update,
+  getSystemLogs, // ✅ add this
 } from "../controller/usercontroller.js";
 
 import { verifyToken } from "../middleware/authMiddleware.js";
@@ -23,5 +24,8 @@ route.get("/users", verifyToken, getallusers);
 route.get("/users/:id", verifyToken, getuserID);
 route.put("/update/user/:id", verifyToken, update);
 route.delete("/delete/user/:id", verifyToken, deleteUser);
+
+// ✅ SYSTEM LOGS ENDPOINT
+route.get("/syslogs", verifyToken, getSystemLogs);
 
 export default route;

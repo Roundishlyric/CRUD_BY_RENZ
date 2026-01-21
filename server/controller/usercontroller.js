@@ -97,35 +97,54 @@ export const login = async (req, res) => {
 // ADD USER (CREATE) + AUDIT
 export const create = async (req, res) => {
   try {
-    const newUser = new User(req.body);
-    const { email } = newUser;
+    const { name, email, address, birthday, contactNumber } = req.body;
 
-    // only block duplicates among ACTIVE users
+    if (!name || !email || !address || !birthday || !contactNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required (including birthday and contact number).",
+      });
+    }
+
+    if (!/^[0-9]+$/.test(contactNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: "Contact number must contain numbers only.",
+      });
+    }
+
     const existingUser = await User.findOne({ email, isDeleted: false });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "Email already exists!" });
     }
 
-    const savedData = await newUser.save();
+    const newUser = await User.create({
+      name,
+      email,
+      address,
+      birthday: new Date(birthday),
+      contactNumber,
+    });
 
     await writeAudit({
       model: "Users",
-      recordId: savedData._id,
+      recordId: newUser._id,
       action: "CREATE",
       req,
       before: null,
-      after: savedData.toObject(),
+      after: newUser.toObject(),
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "User created successfully.",
-      result: savedData,
+      result: newUser,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // SHOW USERS (HIDE DELETED)
 // SHOW USERS
@@ -171,16 +190,38 @@ export const getuserID = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const id = req.params.id;
+    const { name, email, address, birthday, contactNumber } = req.body;
+
+    if (!name || !email || !address || !birthday || !contactNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required (including birthday and contact number).",
+      });
+    }
+
+    if (!/^[0-9]+$/.test(contactNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: "Contact number must contain numbers only.",
+      });
+    }
 
     const beforeDoc = await User.findOne({ _id: id, isDeleted: false });
     if (!beforeDoc) {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    const updateddata = await User.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const updateddata = await User.findByIdAndUpdate(
+      id,
+      {
+        name,
+        email,
+        address,
+        birthday: new Date(birthday),
+        contactNumber,
+      },
+      { new: true, runValidators: true }
+    );
 
     await writeAudit({
       model: "Users",
@@ -191,15 +232,16 @@ export const update = async (req, res) => {
       after: updateddata.toObject(),
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "User updated successfully.",
       result: updateddata,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // DELETE USER (SOFT DELETE) + AUDIT
 export const deleteUser = async (req, res) => {
@@ -247,3 +289,21 @@ export const getSystemLogs = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// CLEAR SYSTEM LOGS
+export const clearSystemLogs = async (req, res) => {
+  try {
+    await AuditLog.deleteMany({});
+
+    res.status(200).json({
+      success: true,
+      message: "System logs cleared successfully.",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+

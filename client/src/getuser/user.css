@@ -1,46 +1,174 @@
-.userTable{
-    width: 60%;
-    margin: 50px auto;
-    background-color: rgb(137, 0, 0);
-    padding: 50px;
-    border-radius: 10px;
-    box-shadow: 1px 1px 8px rgba(0,0,0,0.65px);
+/* MAIN CONTAINER */
+.userTable {
+  width: 90%;
+  margin: 50px auto;
+  background-color: rgb(137, 0, 0);
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.65);
 }
 
-.userTable table{
-    width: 100% ;
-    margin: 30px;
-    background-color: gray;
+/* LAYOUT */
+.layout {
+  display: flex;
+  gap: 30px;
 }
 
-.userTable .name-panel{
-    background-color: rgb(58, 58, 58);
+/* SIDEBAR */
+.sidebar {
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  /* makes logout stay at bottom */
+  min-height: 100%;
 }
 
-.userTable button{
-    margin: 0 10px;
+/* TAB LINKS */
+.tab-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 0.95rem;
+
+  color: white;
+  border: 2px solid white;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+
+  transition: all 0.2s ease;
 }
 
-.userTable table thead th{
-    background-color: rgb(142, 0, 0);
-    color: white;
+.tab-link i {
+  font-size: 1rem;
 }
 
+.tab-link:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* LOGOUT AT BOTTOM */
+.tab-link.danger {
+  margin-top: auto;
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.tab-link.danger:hover {
+  background-color: rgba(255, 0, 0, 0.25);
+  color: white;
+}
+
+/* CONTENT */
+.content {
+  flex: 1;
+}
+
+/* GREETING */
 .head {
   text-align: center;
-  margin: 20px 0;
+  margin-bottom: 30px;
   font-size: 2rem;
   font-weight: bold;
   color: white;
 }
 
-.userTable table tbody td{
-    padding: 10px;
-    text-align: center;
-    vertical-align: middle;
+/* TABLE */
+.userTable table {
+  width: 100%;
+  background-color: white;
+  border-collapse: collapse;
 }
 
-.actionbuttons button{
-    margin: 0 10px;
+/* HEADER */
+.userTable table thead th {
+  background-color: rgb(58, 58, 58);
+  color: white;
+  text-align: center;
+  padding: 12px;
 }
 
+/* BODY */
+.userTable table tbody td {
+  background-color: white; /* IMPORTANT: removes gray bleed */
+  padding: 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* ACTION COLUMN */
+.actionbuttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  background-color: transparent;
+}
+
+/* ACTION LINKS (EDIT / DELETE) */
+.action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  border-radius: 6px;
+  background-color: transparent !important;
+  opacity: 1 !important;
+
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+/* EDIT */
+.action-link.edit {
+  color: #585858;
+  border: 2px solid oklch(58.292% 0.00007 271.152);
+}
+
+.action-link.edit:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* DELETE */
+.action-link.delete {
+  color: #ff0000;
+  border: 2px solid #ff0000;
+}
+
+.action-link.delete:hover {
+  background-color: rgba(255, 0, 0, 0.25);
+  color: white;
+}
+
+/* EMPTY ROW */
+.userTable td[colspan] {
+  padding: 20px;
+  font-style: italic;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .tab-link.danger {
+    margin-top: 0;
+  }
+}

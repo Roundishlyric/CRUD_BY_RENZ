@@ -71,14 +71,39 @@ const Syslogs = () => {
     }
   }, [navigate]);
 
+  const clearLogs = async () => {
+    const confirmClear = window.confirm(
+      "Are you sure you want to clear ALL system logs?\nThis action cannot be undone."
+    );
+    if (!confirmClear) return;
+
+    try {
+      const token = getTokenOrRedirect();
+      if (!token) return;
+
+      await axios.delete(`${API_BASE}/api/user/syslogs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      toast.success("System logs cleared.", { position: "top-right" });
+      setLogs([]); // clear UI immediately
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to clear system logs.",
+        { position: "top-right" }
+      );
+      console.log("CLEAR LOGS ERROR:", error.response?.status, error.response?.data || error);
+    }
+  };
+
   useEffect(() => {
     loadCurrentUser();
     fetchLogs();
 
-    // ✅ Auto-refresh every 5 seconds (you can change to 3000/10000 etc.)
+    // Auto-refresh every 5 seconds
     const interval = setInterval(fetchLogs, 5000);
 
-    // ✅ Also refresh when user comes back to the tab
+    // Also refresh when user comes back to the tab
     const onFocus = () => fetchLogs();
     window.addEventListener("focus", onFocus);
 
@@ -100,20 +125,18 @@ const Syslogs = () => {
 
         {/* CENTER */}
         <div className="flex-grow-1 text-center">
-          <h1 className="head mb-0">
-            System Logs
-          </h1>
+          <h1 className="head mb-0">System Logs</h1>
         </div>
 
         {/* RIGHT */}
-        <div>
+        <div className="d-flex gap-2">
           <button
             type="button"
-            className="btn btn-secondary"
-            onClick={fetchLogs}
-            disabled={loading}
+            className="btn btn-danger"
+            onClick={clearLogs}
+            disabled={logs.length === 0}
           >
-            {loading ? "Refreshing..." : "Refresh"}
+            Clear Logs
           </button>
         </div>
       </div>
@@ -132,7 +155,7 @@ const Syslogs = () => {
         <tbody>
           {logs.length === 0 ? (
             <tr>
-              <td colSpan="6" className="text-center">
+              <td colSpan="5" className="text-center">
                 No logs yet. Try Create/Update/Delete a user.
               </td>
             </tr>

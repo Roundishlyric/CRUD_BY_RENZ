@@ -9,6 +9,8 @@ const UpdateUser = () => {
     name: "",
     email: "",
     address: "",
+    birthday: "",
+    contactNumber: "",
   });
 
   const navigate = useNavigate();
@@ -18,13 +20,22 @@ const UpdateUser = () => {
   const getTokenOrRedirect = () => {
     const token = localStorage.getItem("token");
     if (!token || token === "undefined" || token === "null") {
-      toast.error("Session expired. Please log in again.", { position: "top-right" });
+      toast.error("Session expired. Please log in again.", {
+        position: "top-right",
+      });
       localStorage.removeItem("user");
       localStorage.removeItem("token");
       navigate("/");
       return null;
     }
     return token;
+  };
+
+  const toDateInputValue = (dateValue) => {
+    if (!dateValue) return "";
+    const d = new Date(dateValue);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toISOString().slice(0, 10); // YYYY-MM-DD
   };
 
   useEffect(() => {
@@ -37,13 +48,22 @@ const UpdateUser = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // ✅ your backend returns { result: user }
-        setUser(res.data?.result || { name: "", email: "", address: "" });
+        const u = res.data?.result;
+
+        setUser({
+          name: u?.name || "",
+          email: u?.email || "",
+          address: u?.address || "",
+          birthday: toDateInputValue(u?.birthday),
+          contactNumber: u?.contactNumber || "",
+        });
       } catch (err) {
         const status = err.response?.status;
 
         if ([401, 403].includes(status)) {
-          toast.error("Unauthorized. Please log in again.", { position: "top-right" });
+          toast.error("Unauthorized. Please log in again.", {
+            position: "top-right",
+          });
           localStorage.removeItem("user");
           localStorage.removeItem("token");
           navigate("/");
@@ -60,14 +80,24 @@ const UpdateUser = () => {
 
   const inputhandler = (e) => {
     const { name, value } = e.target;
+
+    // ✅ enforce numbers only for contactNumber
+    if (name === "contactNumber") {
+      const onlyDigits = value.replace(/\D/g, "");
+      setUser((prev) => ({ ...prev, [name]: onlyDigits }));
+      return;
+    }
+
     setUser((prev) => ({ ...prev, [name]: value }));
   };
 
   const submitform = async (e) => {
     e.preventDefault();
 
-    if (!user.name || !user.email || !user.address) {
-      toast.error("Please fill out all fields before submitting.", { position: "top-right" });
+    if (!user.name || !user.email || !user.address || !user.birthday || !user.contactNumber) {
+      toast.error("Please fill out all fields before submitting.", {
+        position: "top-right",
+      });
       return;
     }
 
@@ -76,7 +106,19 @@ const UpdateUser = () => {
       return;
     }
 
-    const confirmUpdate = window.confirm("Are you sure you want to update this user?");
+    if (!/^[0-9]+$/.test(user.contactNumber)) {
+      toast.error("Contact number must contain numbers only.", { position: "top-right" });
+      return;
+    }
+
+    if (user.contactNumber.length < 7 || user.contactNumber.length > 15) {
+      toast.error("Contact number must be 7 to 15 digits.", { position: "top-right" });
+      return;
+    }
+
+    const confirmUpdate = window.confirm(
+      "Are you sure you want to update this user?"
+    );
     if (!confirmUpdate) return;
 
     try {
@@ -89,6 +131,8 @@ const UpdateUser = () => {
           name: user.name,
           email: user.email,
           address: user.address,
+          birthday: user.birthday,
+          contactNumber: user.contactNumber,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -98,13 +142,17 @@ const UpdateUser = () => {
       toast.success(response.data?.message || "User updated successfully.", {
         position: "top-right",
       });
+
       navigate("/user");
     } catch (error) {
       const status = error.response?.status;
-      const message = error.response?.data?.message || "Something went wrong. Try again.";
+      const message =
+        error.response?.data?.message || "Something went wrong. Try again.";
 
       if ([401, 403].includes(status)) {
-        toast.error("Unauthorized. Please log in again.", { position: "top-right" });
+        toast.error("Unauthorized. Please log in again.", {
+          position: "top-right",
+        });
         localStorage.removeItem("user");
         localStorage.removeItem("token");
         navigate("/");
@@ -161,6 +209,34 @@ const UpdateUser = () => {
             onChange={inputhandler}
             autoComplete="off"
             placeholder="Enter your address"
+          />
+        </div>
+
+        {/* ✅ NEW: Birthday */}
+        <div className="input">
+          <label htmlFor="birthday">Birthday:</label>
+          <input
+            type="date"
+            id="birthday"
+            name="birthday"
+            value={user.birthday}
+            onChange={inputhandler}
+          />
+        </div>
+
+        {/* ✅ NEW: Contact Number (numbers only) */}
+        <div className="input">
+          <label htmlFor="contactNumber">Contact Number:</label>
+          <input
+            type="text"
+            id="contactNumber"
+            name="contactNumber"
+            value={user.contactNumber}
+            onChange={inputhandler}
+            autoComplete="off"
+            placeholder="Enter contact number"
+            inputMode="numeric"
+            pattern="[0-9]*"
           />
         </div>
 

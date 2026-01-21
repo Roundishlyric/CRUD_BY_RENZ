@@ -26,200 +26,134 @@ const User = () => {
   };
 
   useEffect(() => {
-    // Load logged-in user
     const storedUser = localStorage.getItem("user");
-
     if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
       try {
         setCurrentUser(JSON.parse(storedUser));
-      } catch (err) {
-        console.log("Invalid JSON in localStorage user:", storedUser);
+      } catch {
         localStorage.removeItem("user");
-        setCurrentUser(null);
       }
-    } else {
-      localStorage.removeItem("user");
-      setCurrentUser(null);
     }
 
-    // Fetch users list
-    const fetchData = async () => {
+    const fetchUsers = async () => {
       try {
         const token = getTokenOrRedirect();
         if (!token) return;
 
-        const response = await axios.get(`${API_BASE}/api/user/users`, {
+        const res = await axios.get(`${API_BASE}/api/user/users`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // backend returns { result: [...] }
-        setUsers(response.data?.result || []);
-      } catch (error) {
-        const status = error.response?.status;
-
-        if ([401, 403].includes(status)) {
-          toast.error("Unauthorized. Please log in again.", {
-            position: "top-right",
-          });
-          localStorage.removeItem("user");
-          localStorage.removeItem("token");
-          navigate("/");
-          return;
-        }
-
-        const message =
-          error.response?.data?.message ||
-          error.message ||
-          "Error while fetching users.";
-
-        toast.error(message, { position: "top-right" });
-        console.log("Error while fetching data:", status, error.response?.data || error);
+        setUsers(res.data?.result || []);
+      } catch (err) {
+        toast.error("Failed to fetch users.", { position: "top-right" });
       }
     };
 
-    fetchData();
+    fetchUsers();
   }, [navigate]);
 
-  const deleteUser = async (userID) => {
-    try {
-      const confirmDelete = window.confirm(
-        "Are you sure you want to delete this user?"
-      );
-      if (!confirmDelete) return;
+  const deleteUser = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
 
+    try {
       const token = getTokenOrRedirect();
       if (!token) return;
 
-      const response = await axios.delete(
-        `${API_BASE}/api/user/delete/user/${userID}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      setUsers((prev) => prev.filter((u) => u._id !== userID));
-      toast.success(response.data?.message || "User deleted.", {
-        position: "top-right",
+      await axios.delete(`${API_BASE}/api/user/delete/user/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-    } catch (error) {
-      const status = error.response?.status;
 
-      if ([401, 403].includes(status)) {
-        toast.error("Unauthorized. Please log in again.", {
-          position: "top-right",
-        });
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
-        navigate("/");
-        return;
-      }
-
-      const message =
-        error.response?.data?.message ||
-        error.message ||
-        "Something went wrong while deleting.";
-
-      toast.error(message, { position: "top-right" });
-      console.log("Delete error:", status, error.response?.data || error);
+      setUsers((prev) => prev.filter((u) => u._id !== id));
+      toast.success("User deleted successfully.", { position: "top-right" });
+    } catch {
+      toast.error("Failed to delete user.", { position: "top-right" });
     }
   };
 
   const handleLogout = () => {
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
-    if (!confirmLogout) return;
-
+    if (!window.confirm("Are you sure you want to log out?")) return;
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-
-    toast.success("You have logged out successfully!", {
-      position: "top-right",
-    });
     navigate("/");
   };
 
   return (
-    <div className="userTable">
-      {/* Header row: left buttons, centered greeting, right syslogs */}
-      <div className="d-flex align-items-center mb-4">
-        {/* LEFT */}
-        <div>
-          <button
-            onClick={handleLogout}
-            type="button"
-            className="btn btn-danger me-2"
-          >
-            Log Out <i className="fa-solid fa-right-from-bracket"></i>
-          </button>
+            <div className="userTable">
+              <div className="layout">
+                {/* LEFT TEXT TABS */}
+              <div className="sidebar">
 
-          <Link to="/add" type="button" className="btn btn-danger">
-            Add User <i className="fa-solid fa-user-plus"></i>
+          <Link to="/add" className="tab-link">
+            <i className="fa-solid fa-user-plus tab-icon"></i>
+            Add User
           </Link>
-        </div>
 
-        {/* CENTER */}
-        <div className="flex-grow-1 text-center">
-          {currentUser?.name && (
-            <h1 className="head mb-0">Greetings, {currentUser.name}</h1>
-          )}
-        </div>
-
-        {/* RIGHT */}
-        <div>
-          <Link to="/syslogs" type="button" className="btn btn-secondary">
+          <Link to="/syslogs" className="tab-link">
+            <i className="fa-solid fa-clipboard-list tab-icon"></i>
             System Logs
           </Link>
+
+          <span onClick={handleLogout} className="tab-link danger">
+            <i className="fa-solid fa-right-from-bracket tab-icon"></i>
+            Log Out
+          </span>
+
+        </div>
+
+
+        {/* RIGHT CONTENT */}
+        <div className="content">
+          <h1 className="head">Greetings, {currentUser?.name}</h1>
+
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th className="name-panel">Serial Number</th>
+                <th className="name-panel">Name</th>
+                <th className="name-panel">Email</th>
+                <th className="name-panel">Address</th>
+                <th className="name-panel">Birthday</th>
+                <th className="name-panel">Contact Number</th>
+                <th className="name-panel">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {users.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="text-center">
+                    No users found. Click “Add User” to create one.
+                  </td>
+                </tr>
+              ) : (
+                users.map((u, index) => (
+                  <tr key={u._id}>
+                    <td>{index + 1}</td>
+                    <td>{u.name}</td>
+                    <td>{u.email}</td>
+                    <td>{u.address}</td>
+                    <td>{u.birthday ? u.birthday.slice(0, 10) : "-"}</td>
+                    <td>{u.contactNumber || "-"}</td>
+                    <td className="actionbuttons">
+                      <Link to={`/update/${u._id}`} className="action-link edit">
+                        <i className="fa-solid fa-pen"></i>
+                      </Link>
+
+                      <span
+                        onClick={() => deleteUser(u._id)}
+                        className="action-link delete"
+                      >
+                        <i className="fa-solid fa-trash"></i>
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-
-      {/* Table */}
-      <table className="table table-bordered mt-3">
-        <thead>
-          <tr>
-            <th scope="col" className="name-panel">
-              Serial Number
-            </th>
-            <th scope="col" className="name-panel">
-              Name
-            </th>
-            <th scope="col" className="name-panel">
-              Email
-            </th>
-            <th scope="col" className="name-panel">
-              Address
-            </th>
-            <th scope="col" className="name-panel">
-              Actions
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {users.map((u, index) => (
-            <tr key={u._id}>
-              <td>{index + 1}</td>
-              <td>{u.name}</td>
-              <td>{u.email}</td>
-              <td>{u.address}</td>
-              <td className="actionbuttons">
-                <Link
-                  to={`/update/${u._id}`}
-                  type="button"
-                  className="btn btn-danger"
-                >
-                  <i className="fa-solid fa-pen-to-square"></i>
-                </Link>
-                <button
-                  onClick={() => deleteUser(u._id)}
-                  type="button"
-                  className="btn btn-dark ms-2"
-                >
-                  <i className="fa-solid fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 };

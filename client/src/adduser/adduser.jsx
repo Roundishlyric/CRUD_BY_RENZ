@@ -9,6 +9,8 @@ const AddUser = () => {
     name: "",
     email: "",
     address: "",
+    birthday: "",
+    contactNumber: "",
   });
 
   const navigate = useNavigate();
@@ -31,6 +33,14 @@ const AddUser = () => {
 
   const inputhandler = (e) => {
     const { name, value } = e.target;
+
+    // ✅ enforce numbers only for contactNumber
+    if (name === "contactNumber") {
+      const onlyDigits = value.replace(/\D/g, "");
+      setUser((prev) => ({ ...prev, [name]: onlyDigits }));
+      return;
+    }
+
     setUser((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -38,7 +48,7 @@ const AddUser = () => {
     e.preventDefault();
 
     // ✅ Frontend validation
-    if (!user.name || !user.email || !user.address) {
+    if (!user.name || !user.email || !user.address || !user.birthday || !user.contactNumber) {
       toast.error("Please fill out all fields before submitting.", {
         position: "top-right",
       });
@@ -47,6 +57,18 @@ const AddUser = () => {
 
     if (!user.email.includes("@")) {
       toast.error("Email must include '@'", { position: "top-right" });
+      return;
+    }
+
+    // ✅ numbers only check (extra safety)
+    if (!/^[0-9]+$/.test(user.contactNumber)) {
+      toast.error("Contact number must contain numbers only.", { position: "top-right" });
+      return;
+    }
+
+    // ✅ length check (match your model 7-15)
+    if (user.contactNumber.length < 7 || user.contactNumber.length > 15) {
+      toast.error("Contact number must be 7 to 15 digits.", { position: "top-right" });
       return;
     }
 
@@ -59,15 +81,11 @@ const AddUser = () => {
       const token = getTokenOrRedirect();
       if (!token) return;
 
-      const response = await axios.post(
-        `${API_BASE}/api/user/register`,
-        user,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.post(`${API_BASE}/api/user/register`, user, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       toast.success(response.data?.message || "User created successfully!", {
         position: "top-right",
@@ -81,11 +99,9 @@ const AddUser = () => {
         error.response?.data?.error ||
         "Something went wrong. Try again.";
 
-      // ✅ Debug logs (safe to keep during dev)
       console.log("ADD USER STATUS:", status);
       console.log("ADD USER RESPONSE:", error.response?.data);
 
-      // ✅ Handle auth failures
       if ([401, 403].includes(status)) {
         toast.error("Unauthorized. Please log in again.", {
           position: "top-right",
@@ -96,7 +112,6 @@ const AddUser = () => {
         return;
       }
 
-      // ✅ Show backend validation errors (400)
       if (status === 400) {
         toast.error(message, { position: "top-right" });
         return;
@@ -151,6 +166,34 @@ const AddUser = () => {
             onChange={inputhandler}
             autoComplete="off"
             placeholder="Enter your address"
+          />
+        </div>
+
+        {/* ✅ NEW: Birthday */}
+        <div className="input">
+          <label htmlFor="birthday">Birthday:</label>
+          <input
+            type="date"
+            id="birthday"
+            name="birthday"
+            value={user.birthday}
+            onChange={inputhandler}
+          />
+        </div>
+
+        {/* ✅ NEW: Contact Number (numbers only) */}
+        <div className="input">
+          <label htmlFor="contactNumber">Contact Number:</label>
+          <input
+            type="text"
+            id="contactNumber"
+            name="contactNumber"
+            value={user.contactNumber}
+            onChange={inputhandler}
+            autoComplete="off"
+            placeholder="Enter contact number"
+            inputMode="numeric"
+            pattern="[0-9]*"
           />
         </div>
 

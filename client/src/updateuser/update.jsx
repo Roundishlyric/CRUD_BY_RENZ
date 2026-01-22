@@ -81,7 +81,7 @@ const UpdateUser = () => {
   const inputhandler = (e) => {
     const { name, value } = e.target;
 
-    // ✅ enforce numbers only for contactNumber
+    //enforce numbers only for contactNumber
     if (name === "contactNumber") {
       const onlyDigits = value.replace(/\D/g, "");
       setUser((prev) => ({ ...prev, [name]: onlyDigits }));
@@ -212,7 +212,7 @@ const UpdateUser = () => {
           />
         </div>
 
-        {/* ✅ NEW: Birthday */}
+        {/* Birthday */}
         <div className="input">
           <label htmlFor="birthday">Birthday:</label>
           <input
@@ -224,7 +224,7 @@ const UpdateUser = () => {
           />
         </div>
 
-        {/* ✅ NEW: Contact Number (numbers only) */}
+        {/* Contact Number (numbers only) */}
         <div className="input">
           <label htmlFor="contactNumber">Contact Number:</label>
           <input

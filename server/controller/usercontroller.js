@@ -154,7 +154,7 @@ export const getallusers = async (req, res) => {
     // otherwise use User.find()
     const userData = await User.find({ isDeleted: false });
 
-    // ✅ DO NOT return 404 when empty
+    // DO NOT return 404 when empty
     return res.status(200).json({
       success: true,
       message: "Users fetched successfully",

@@ -23,13 +23,11 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // 🎂 BIRTHDAY
     birthday: {
       type: Date,
       required: true,
     },
 
-    // 📞 CONTACT NUMBER (NUMBERS ONLY)
     contactNumber: {
       type: String,              // keep as String to preserve leading zeros
       required: true,

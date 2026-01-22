@@ -29,7 +29,7 @@ function Login() {
         password,
       });
 
-      // ✅ Your backend returns: result + accessToken
+      // Your backend returns: result + accessToken
       localStorage.setItem("user", JSON.stringify(response.data.result));
       localStorage.setItem("token", response.data.accessToken);
 

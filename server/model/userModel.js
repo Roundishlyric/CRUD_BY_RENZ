@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema(
     },
 
     contactNumber: {
-      type: String,              // keep as String to preserve leading zeros
+      type: String,             
       required: true,
       trim: true,
       match: [/^[0-9]+$/, "Contact number must contain numbers only"],

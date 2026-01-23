@@ -1,3 +1,2 @@
-Space Port Tech Test
-Name: Renz Danniel R. Rapanut
-email: renzdanniel63@gmail.com
+How to see the database:
+link: http://localhost:8081

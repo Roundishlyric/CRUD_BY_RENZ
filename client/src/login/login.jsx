@@ -47,7 +47,7 @@ function Login() {
 
   return (
     <div className="login">
-      <h2>SPACEPORT</h2>
+      <h2>MERNSTACK BY RENZ </h2>
       <h2>LOGIN</h2>
 
       <form onSubmit={handleSubmit} className="logform">

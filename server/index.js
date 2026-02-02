@@ -1,28 +1,31 @@
 import express from "express";
-import bodyParser from "body-parser";
 import dotenv from "dotenv";
-import route from "./routes/userroutes.js";
-import dbconnect from "./database.js";
-import http from 'http';
+import http from "http";
 import cors from "cors";
 
-dotenv.config();
+import routes from "./routes/userroutes.js";
+import dynamicCrudRoutes from "./routes/dynamicCrudRoutes.js";
+import dbconnect from "./database.js";
+
+// register all models once
+import "./model/models.js";
+
+dotenv.config({ path: "./.env" });
+
 const app = express();
 
-app.use(express.json())
-app.use(cors({ origins: "http://localhost:3000", credentials: true }));
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
+dbconnect();
 
-const server = http.createServer(app)
-const PORT = process.env.PORT || 7000;
-const MONGOURL = process.env.MONGO_URL;
-const MONGO_LOG=process.env.MONGO_LOG;
+// existing routes
+app.use("/api/user", routes);
 
+// dynamic CRUD routes
+app.use("/api/crud", dynamicCrudRoutes);
 
-dbconnect(); 
+const server = http.createServer(app);
+const PORT = process.env.PORT || 8000;
 
-app.use("/api/user",route);
-
-
-server.listen(PORT, () => console.log(`Server starting on port: ${PORT}`))
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

@@ -16,7 +16,7 @@ const AddUser = () => {
   const navigate = useNavigate();
   const API_BASE = "http://localhost:8000";
 
-  // ✅ Prevent Bearer undefined/null
+  // Prevent Bearer undefined/null
   const getTokenOrRedirect = () => {
     const token = localStorage.getItem("token");
     if (!token || token === "undefined" || token === "null") {
@@ -34,7 +34,7 @@ const AddUser = () => {
   const inputhandler = (e) => {
     const { name, value } = e.target;
 
-    // ✅ enforce numbers only for contactNumber
+    // enforce numbers only for contactNumber
     if (name === "contactNumber") {
       const onlyDigits = value.replace(/\D/g, "");
       setUser((prev) => ({ ...prev, [name]: onlyDigits }));
@@ -47,7 +47,7 @@ const AddUser = () => {
   const submitform = async (e) => {
     e.preventDefault();
 
-    // ✅ Frontend validation
+    //  Frontend validation
     if (!user.name || !user.email || !user.address || !user.birthday || !user.contactNumber) {
       toast.error("Please fill out all fields before submitting.", {
         position: "top-right",
@@ -60,13 +60,13 @@ const AddUser = () => {
       return;
     }
 
-    // ✅ numbers only check (extra safety)
+    // numbers only check (extra safety)
     if (!/^[0-9]+$/.test(user.contactNumber)) {
       toast.error("Contact number must contain numbers only.", { position: "top-right" });
       return;
     }
 
-    // ✅ length check (match your model 7-15)
+    // length check (match your model 7-15)
     if (user.contactNumber.length < 7 || user.contactNumber.length > 15) {
       toast.error("Contact number must be 7 to 15 digits.", { position: "top-right" });
       return;
@@ -169,7 +169,7 @@ const AddUser = () => {
           />
         </div>
 
-        {/* ✅ NEW: Birthday */}
+        {/*  Birthday */}
         <div className="input">
           <label htmlFor="birthday">Birthday:</label>
           <input
@@ -181,7 +181,7 @@ const AddUser = () => {
           />
         </div>
 
-        {/* ✅ NEW: Contact Number (numbers only) */}
+        {/*  Contact Number */}
         <div className="input">
           <label htmlFor="contactNumber">Contact Number:</label>
           <input

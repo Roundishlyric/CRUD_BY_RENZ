@@ -1,12 +1,11 @@
-import User from "../model/userModel.js";
-import regis from "../model/logmodel.js";
-import AuditLog from "../model/auditLogModel.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
+import { Users, Register, AuditLog } from "../model/models.js";
 
 dotenv.config();
 
+/* AUDIT LOGGER*/
 const writeAudit = async ({ model, recordId, action, req, before, after }) => {
   try {
     await AuditLog.create({
@@ -15,86 +14,77 @@ const writeAudit = async ({ model, recordId, action, req, before, after }) => {
       action,
       actorId: req.user?.id || null,
       actorEmail: req.user?.email || null,
-      before: before || null,
-      after: after || null,
+      before: before ?? null,
+      after: after ?? null,
       at: new Date(),
     });
   } catch (e) {
-    // Don’t crash the request if logging fails
     console.log("Audit log write failed:", e.message);
   }
 };
 
-// REGISTER USER (unchanged)
+/* AUTH (REGISTER ADMIN)*/
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
-    const userExist = await regis.findOne({ email });
-    if (userExist) {
-      return res.status(400).json({ success: false, message: "Email already exists." });
-    }
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: "All fields are required." });
     }
 
+    const userExist = await Register.findOne({ email });
+    if (userExist) {
+      return res.status(400).json({ success: false, message: "Email already exists." });
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newLog = new regis({ name, email, password: hashedPassword });
-    const savedData = await newLog.save();
+    const admin = await Register.create({ name, email, password: hashedPassword });
 
-    const accessToken = jwt.sign(
-      { id: savedData._id, email: savedData.email },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1h" }
-    );
-
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      result: { id: savedData._id, name: savedData.name, email: savedData.email },
-      accessToken,
+      message: "Admin registered successfully",
+      result: { id: admin._id, name: admin.name, email: admin.email },
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// LOGIN USER (unchanged)
+/* AUTH (LOGIN ADMIN)*/
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await regis.findOne({ email });
-    if (!user) {
+    const admin = await Register.findOne({ email });
+    if (!admin) {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    const validPassword = await bcrypt.compare(password, admin.password);
     if (!validPassword) {
       return res.status(401).json({ success: false, message: "Invalid credentials." });
     }
 
     const accessToken = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: admin._id, email: admin.email },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "1h" }
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Login successful",
-      result: { id: user._id, name: user.name, email: user.email },
+      result: { id: admin._id, name: admin.name, email: admin.email },
       accessToken,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ADD USER (CREATE) + AUDIT
+/* USERS CRUD (CREATE) */
 export const create = async (req, res) => {
   try {
     const { name, email, address, birthday, contactNumber } = req.body;
@@ -113,16 +103,29 @@ export const create = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email, isDeleted: false });
+    const parsedBirthday = new Date(birthday);
+    if (Number.isNaN(parsedBirthday.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid birthday format. Use a valid date (e.g. 2026-02-02).",
+      });
+    }
+
+    // Treat missing isDeleted as active => blocks duplicates safely
+    const existingUser = await Users.findOne({
+      email,
+      isDeleted: { $ne: true }, // false OR missing
+    });
+
     if (existingUser) {
       return res.status(400).json({ success: false, message: "Email already exists!" });
     }
 
-    const newUser = await User.create({
+    const newUser = await Users.create({
       name,
       email,
       address,
-      birthday: new Date(birthday),
+      birthday: parsedBirthday,
       contactNumber,
     });
 
@@ -135,58 +138,61 @@ export const create = async (req, res) => {
       after: newUser.toObject(),
     });
 
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       message: "User created successfully.",
       result: newUser,
+    });
+  } catch (error) {
+    // Mongo duplicate from partial index (active users)
+    if (error?.code === 11000) {
+      return res.status(400).json({ success: false, message: "Email already exists!" });
+    }
+
+    // Mongoose validation errors
+    if (error?.name === "ValidationError" || error?.name === "CastError") {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/* USERS CRUD (READ ALL)*/
+export const getallusers = async (req, res) => {
+  try {
+    const userData = await Users.find({ isDeleted: false });
+    return res.status(200).json({
+      success: true,
+      message: "Users fetched successfully",
+      result: userData,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-
-// SHOW USERS (HIDE DELETED)
-// SHOW USERS
-export const getallusers = async (req, res) => {
-  try {
-    // if you implemented soft delete, keep { isDeleted: false }
-    // otherwise use User.find()
-    const userData = await User.find({ isDeleted: false });
-
-    // DO NOT return 404 when empty
-    return res.status(200).json({
-      success: true,
-      message: "Users fetched successfully",
-      result: userData, // [] is OK
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-
-// SPECIFIC ID (ONLY IF NOT DELETED)
+/*USERS CRUD (READ ONE)*/
 export const getuserID = async (req, res) => {
   try {
     const id = req.params.id;
 
-    const userExist = await User.findOne({ _id: id, isDeleted: false });
+    const userExist = await Users.findOne({ _id: id, isDeleted: false });
     if (!userExist) {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "User fetched successfully",
       result: userExist,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// UPDATE USER + AUDIT
+/* USERS CRUD (UPDATE)*/
 export const update = async (req, res) => {
   try {
     const id = req.params.id;
@@ -206,20 +212,22 @@ export const update = async (req, res) => {
       });
     }
 
-    const beforeDoc = await User.findOne({ _id: id, isDeleted: false });
+    const parsedBirthday = new Date(birthday);
+    if (Number.isNaN(parsedBirthday.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid birthday format. Use a valid date (e.g. 2026-02-02).",
+      });
+    }
+
+    const beforeDoc = await Users.findOne({ _id: id, isDeleted: false });
     if (!beforeDoc) {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    const updateddata = await User.findByIdAndUpdate(
+    const updateddata = await Users.findByIdAndUpdate(
       id,
-      {
-        name,
-        email,
-        address,
-        birthday: new Date(birthday),
-        contactNumber,
-      },
+      { name, email, address, birthday: parsedBirthday, contactNumber },
       { new: true, runValidators: true }
     );
 
@@ -238,17 +246,22 @@ export const update = async (req, res) => {
       result: updateddata,
     });
   } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(400).json({ success: false, message: "Email already exists!" });
+    }
+    if (error?.name === "ValidationError" || error?.name === "CastError") {
+      return res.status(400).json({ success: false, message: error.message });
+    }
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-
-// DELETE USER (SOFT DELETE) + AUDIT
+/* USERS CRUD (SOFT DELETE)*/
 export const deleteUser = async (req, res) => {
   try {
     const id = req.params.id;
 
-    const userExist = await User.findOne({ _id: id, isDeleted: false });
+    const userExist = await Users.findOne({ _id: id, isDeleted: false });
     if (!userExist) {
       return res.status(404).json({ success: false, message: "User not found." });
     }
@@ -258,7 +271,6 @@ export const deleteUser = async (req, res) => {
     userExist.isDeleted = true;
     userExist.deletedAt = new Date();
     userExist.deletedBy = req.user?.id || null;
-
     await userExist.save();
 
     await writeAudit({
@@ -270,40 +282,31 @@ export const deleteUser = async (req, res) => {
       after: userExist.toObject(),
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "User soft-deleted successfully.",
       result: { id },
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// SYSTEM LOGS (AUDIT TRAILS)
+/* SYSTEM LOGS*/
 export const getSystemLogs = async (req, res) => {
   try {
     const logs = await AuditLog.find().sort({ at: -1 }).limit(200);
-    res.status(200).json({ success: true, result: logs });
+    return res.status(200).json({ success: true, result: logs });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// CLEAR SYSTEM LOGS
 export const clearSystemLogs = async (req, res) => {
   try {
     await AuditLog.deleteMany({});
-
-    res.status(200).json({
-      success: true,
-      message: "System logs cleared successfully.",
-    });
+    return res.status(200).json({ success: true, message: "System logs cleared successfully." });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
-

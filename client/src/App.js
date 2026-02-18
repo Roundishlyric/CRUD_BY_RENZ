@@ -1,43 +1,23 @@
-import AddUser from './adduser/adduser';
-import Signup from './signup/signup.jsx'
-import './App.css';
-import User from './getuser/user';
+import Signup from "./signup/signup.jsx";
+import "./App.css";
+import User from "./getuser/user";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Update from './updateuser/update.jsx';
-import Login from './login/login.jsx';
-import Syslogs from './syslog/syslog';
-
+import Login from "./login/login.jsx";
+import Syslogs from "./syslog/syslog";
 
 function App() {
   const route = createBrowserRouter([
-    {
-      path:"/",
-      element:<Login />
-    },
-    {
-      path:"/register",
-      element:<Signup />
-    },
-    {
-      path: "/user",
-      element: <User />,
-    },
-    {
-      path: "/add",
-      element: <AddUser />,  
-    },
-    {
-      path: "/update/:id",
-      element:<Update />
-    },
-    {
-      path: "/syslogs",
-      element:<Syslogs />
-    },
-    {
-      path:"/register",
-      element:<Signup />
-    }
+    { path: "/", element: <Login /> },
+    { path: "/register", element: <Signup /> },
+
+    // Users dashboard (modals live here)
+    { path: "/user", element: <User /> },
+
+    // Backward compatible routes: they now open the modal inside the same UI
+    { path: "/add", element: <User /> },
+    { path: "/update/:id", element: <User /> },
+
+    { path: "/syslogs", element: <Syslogs /> },
   ]);
 
   return (

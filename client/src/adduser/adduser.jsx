@@ -3,6 +3,7 @@ import "./adduser.css";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
+import useConfirm from "../components/useConfirm";
 
 const AddUser = () => {
   const [user, setUser] = useState({
@@ -15,6 +16,8 @@ const AddUser = () => {
 
   const navigate = useNavigate();
   const API_BASE = "http://localhost:8000";
+
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // Prevent Bearer undefined/null
   const getTokenOrRedirect = () => {
@@ -72,10 +75,14 @@ const AddUser = () => {
       return;
     }
 
-    const confirmCreate = window.confirm(
-      "Are you sure you want to create this user?"
-    );
-    if (!confirmCreate) return;
+    const ok = await confirm({
+      title: "Create user",
+      message: "Are you sure you want to create this user?",
+      confirmText: "Create",
+      cancelText: "Cancel",
+      variant: "default",
+    });
+    if (!ok) return;
 
     try {
       const token = getTokenOrRedirect();
@@ -203,6 +210,8 @@ const AddUser = () => {
           </button>
         </div>
       </form>
+
+      <ConfirmDialog />
     </div>
   );
 };

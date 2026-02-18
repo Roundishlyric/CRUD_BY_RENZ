@@ -1,179 +1,239 @@
-/* MAIN CONTAINER */
-.userTable {
-  width: 90%;
-  margin: 50px auto;
-  background-color: rgb(137, 0, 0);
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.65);
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+/* PAGE BACKGROUND */
+.dashPage {
+  min-height: 100vh;
+  padding: 40px 18px;
+  background: radial-gradient(circle at center, #1f2d4d, #0a0f1c);
+}
+
+/* MAIN CARD */
+.dashCard {
+  width: min(1200px, 95vw);
+  height: calc(100vh - 80px); /* KEY: forces full height */
+  margin: auto;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0b1120;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 /* LAYOUT */
-.layout {
+.dashLayout {
   display: flex;
-  gap: 30px;
+  height: 100%;              /* KEY */
+  align-items: stretch;
 }
 
 /* SIDEBAR */
-.sidebar {
-  width: 180px;
+.dashSidebar {
+  width: 240px;
+  padding: 26px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-
-  /* makes logout stay at bottom */
-  min-height: 100%;
+  gap: 14px;
+  background: rgba(255,255,255,0.03);
+  border-right: 1px solid rgba(255,255,255,0.06);
+  align-self: stretch;       /* KEY */
 }
 
-/* TAB LINKS */
-.tab-link {
+/* SIDEBAR LINKS */
+.dashLink,
+.dashLinkBtn {
   display: flex;
   align-items: center;
   gap: 10px;
-
-  padding: 12px 16px;
-  font-weight: 600;
-  font-size: 0.95rem;
-
+  padding: 12px 14px;
+  border-radius: 12px;
   color: white;
-  border: 2px solid white;
-  border-radius: 8px;
-  cursor: pointer;
   text-decoration: none;
-
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: 0.2s ease;
+  opacity: 0.92;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
 }
 
-.tab-link i {
-  font-size: 1rem;
+.dashLink:hover,
+.dashLinkBtn:hover {
+  background: rgba(255,255,255,0.08);
 }
 
-.table-bordered>:not(caption)>* {
-    vertical-align: middle;
-    border-width: var(--bs-border-width) 0;
+/* ACTIVE STATE */
+.dashLink.active,
+.dashLinkBtn.active {
+  background: rgba(88,166,255,0.16);
+  border: 1px solid rgba(88,166,255,0.35);
 }
 
-.tab-link:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-/* LOGOUT AT BOTTOM */
-.tab-link.danger {
+/* LOG OUT */
+.dashLink.danger {
   margin-top: auto;
-  border-color: #ffffff;
-  color: #ffffff;
+  color: #ff6b6b;
 }
 
-.tab-link.danger:hover {
-  background-color: rgba(255, 0, 0, 0.25);
-  color: white;
+.dashLink.danger:hover {
+  background: rgba(255, 0, 0, 0.18);
 }
 
 /* CONTENT */
-.content {
+.dashContent {
   flex: 1;
+  padding: 34px;
+  color: white;
+  overflow: auto;            /* nice: table area scrolls if long */
 }
 
-/* GREETING */
-.head {
-  text-align: center;
-  margin-bottom: 30px;
-  font-size: 2rem;
-  font-weight: bold;
-  color: white;
+.dashHead {
+  margin: 0 0 18px;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+/* TOP ROW */
+.dashTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+/* PRIMARY BUTTON */
+.dashPrimaryBtn {
+  border: 1px solid rgba(88,166,255,0.45);
+  background: rgba(88,166,255,0.18);
+  color: #e9f0ff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.2s ease;
+}
+
+.dashPrimaryBtn:hover {
+  background: rgba(88,166,255,0.26);
+}
+
+/* TABLE WRAPPER */
+.tableWrap {
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 /* TABLE */
-.userTable table {
+.dashTable {
   width: 100%;
-  background-color: white;
   border-collapse: collapse;
+  color: rgba(255,255,255,0.92);
 }
 
-/* HEADER */
-.userTable table thead th {
-  background-color: rgb(58, 58, 58);
-  color: white;
+.dashTable thead th {
+  text-align: left;
+  padding: 14px;
+  font-size: 13px;
+  background: rgba(255,255,255,0.06);
+}
+
+.dashTable tbody td {
+  padding: 13px 14px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.dashTable tbody tr:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.emptyRow {
   text-align: center;
-  padding: 12px;
-}
-
-/* BODY */
-.userTable table tbody td {
-  background-color: white; /* IMPORTANT: removes gray bleed */
-  padding: 10px;
-  text-align: center;
-  vertical-align: middle;
-}
-
-/* ACTION COLUMN */
-.actionbuttons {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  background-color: transparent;
-}
-
-/* ACTION LINKS (EDIT / DELETE) */
-.action-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  padding: 6px 14px;
-  font-size: 0.9rem;
-  font-weight: 600;
-
-  border-radius: 6px;
-  background-color: transparent !important;
-  opacity: 1 !important;
-
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-/* EDIT */
-.action-link.edit {
-  color: #585858;
-  border: 2px solid oklch(58.292% 0.00007 271.152);
-}
-
-.action-link.edit:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: white;
-}
-
-/* DELETE */
-.action-link.delete {
-  color: #ff0000;
-  border: 2px solid #ff0000;
-}
-
-.action-link.delete:hover {
-  background-color: rgba(255, 0, 0, 0.25);
-  color: white;
-}
-
-/* EMPTY ROW */
-.userTable td[colspan] {
-  padding: 20px;
+  padding: 22px !important;
+  opacity: 0.75;
   font-style: italic;
 }
 
+/* ACTION BUTTONS */
+.actionCell {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.iconBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+  border: none;
+  background: transparent;
+}
+
+.iconBtn.edit {
+  color: #3bb7ff;
+  background: rgba(59,183,255,0.12);
+}
+
+.iconBtn.edit:hover {
+  background: rgba(59,183,255,0.22);
+}
+
+.iconBtn.delete {
+  color: #ff6b6b;
+  background: rgba(255,107,107,0.12);
+}
+
+.iconBtn.delete:hover {
+  background: rgba(255,107,107,0.22);
+}
+
 /* RESPONSIVE */
-@media (max-width: 900px) {
-  .layout {
-    flex-direction: column;
+@media (max-width: 860px) {
+  .dashCard {
+    height: auto;
+    min-height: calc(100vh - 80px);
   }
 
-  .sidebar {
+  .dashLayout {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .dashSidebar {
     width: 100%;
     flex-direction: row;
-    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
   }
 
-  .tab-link.danger {
+  .dashLink.danger {
     margin-top: 0;
+  }
+
+  .dashContent {
+    padding: 18px;
+    overflow: visible;
+  }
+
+  .dashTopRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashPrimaryBtn {
+    justify-content: center;
   }
 }

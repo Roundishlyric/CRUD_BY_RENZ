@@ -1,0 +1,78 @@
+/* Form matches dash UI (dark + subtle borders) */
+.rzForm{
+  width: 100%;
+}
+
+.rzGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.rzSpan2{ grid-column: span 2; }
+
+.rzField{
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+}
+
+.rzField label{
+  color: rgba(233,240,255,0.85);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.rzField input{
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: #e9f0ff;
+  outline: none;
+}
+
+.rzField input:focus{
+  border-color: rgba(88,166,255,0.55);
+  box-shadow: 0 0 0 4px rgba(88,166,255,0.12);
+}
+
+.rzActions{
+  margin-top: 16px;
+  display:flex;
+  justify-content:flex-end;
+  gap: 10px;
+}
+
+.rzBtn{
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: #e9f0ff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.rzBtn:disabled{
+  opacity: 0.6;
+  cursor:not-allowed;
+}
+
+.rzBtnGhost:hover{
+  background: rgba(255,255,255,0.08);
+}
+
+.rzBtnPrimary{
+  border-color: rgba(88,166,255,0.45);
+  background: rgba(88,166,255,0.20);
+}
+
+.rzBtnPrimary:hover{
+  background: rgba(88,166,255,0.28);
+}
+
+@media (max-width: 720px){
+  .rzGrid{ grid-template-columns: 1fr; }
+  .rzSpan2{ grid-column: span 1; }
+}

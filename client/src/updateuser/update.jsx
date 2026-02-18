@@ -3,6 +3,7 @@ import "./update.css";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
+import useConfirm from "../components/useConfirm";
 
 const UpdateUser = () => {
   const [user, setUser] = useState({
@@ -16,6 +17,8 @@ const UpdateUser = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const API_BASE = "http://localhost:8000";
+
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const getTokenOrRedirect = () => {
     const token = localStorage.getItem("token");
@@ -116,10 +119,14 @@ const UpdateUser = () => {
       return;
     }
 
-    const confirmUpdate = window.confirm(
-      "Are you sure you want to update this user?"
-    );
-    if (!confirmUpdate) return;
+    const ok = await confirm({
+      title: "Update user",
+      message: "Are you sure you want to update this user?",
+      confirmText: "Update",
+      cancelText: "Cancel",
+      variant: "default",
+    });
+    if (!ok) return;
 
     try {
       const token = getTokenOrRedirect();
@@ -246,6 +253,8 @@ const UpdateUser = () => {
           </button>
         </div>
       </form>
+
+      <ConfirmDialog />
     </div>
   );
 };

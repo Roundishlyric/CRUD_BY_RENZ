@@ -101,7 +101,7 @@ html, body, #root {
   border: none;
   background: #eaeaea;
   width: 100%;
-  box-sizing: border-box; /* ✅ stops overflow on small screens */
+  box-sizing: border-box; 
 }
 
 /* Sign in button BELOW inputs */
@@ -133,7 +133,7 @@ html, body, #root {
 }
 
 /* =========================================================
-   ✅ TABLET (<= 1024px): keep 2 columns but tighter spacing
+   TABLET (<= 1024px): keep 2 columns but tighter spacing
    ========================================================= */
 @media (max-width: 1024px) {
   .authCard {
@@ -156,17 +156,17 @@ html, body, #root {
 }
 
 /* =========================================================
-   ✅ MOBILE (<= 768px): stack layout + avoid fixed height
+   MOBILE (<= 768px)
    ========================================================= */
 @media (max-width: 768px) {
   .authCard {
-    grid-template-columns: 1fr;  /* ✅ one column */
-    height: auto;                /* ✅ remove fixed height */
+    grid-template-columns: 1fr;  
+    height: auto;               
     max-height: none;
   }
 
   .authImage {
-    height: 180px;               /* ✅ top banner image */
+    height: 180px;             
   }
 
   .imageOverlay {
@@ -198,7 +198,7 @@ html, body, #root {
 }
 
 /* =========================================================
-   ✅ EXTRA SMALL PHONES (<= 420px)
+   EXTRA SMALL PHONES (<= 420px)
    ========================================================= */
 @media (max-width: 420px) {
   .authPage {

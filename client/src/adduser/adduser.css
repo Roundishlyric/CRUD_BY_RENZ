@@ -44,7 +44,7 @@
   border-radius: 8px;
   border: none;
   cursor: pointer;
-  width: 100%; /* ✅ full width button */
+  width: 100%; 
   font-weight: 700;
 }
 

@@ -9,6 +9,7 @@ html, body, #root {
   display: grid;
   place-items: center;
   background: radial-gradient(circle at center, #1f2d4d, #0a0f1c);
+  padding: 16px; /* ✅ allow breathing room on small screens */
 }
 
 /* Card */
@@ -100,6 +101,7 @@ html, body, #root {
   border: none;
   background: #eaeaea;
   width: 100%;
+  box-sizing: border-box; /* ✅ stops overflow on small screens */
 }
 
 /* Sign in button BELOW inputs */
@@ -128,4 +130,91 @@ html, body, #root {
 .divider {
   text-align: center;
   opacity: 0.6;
+}
+
+/* =========================================================
+   ✅ TABLET (<= 1024px): keep 2 columns but tighter spacing
+   ========================================================= */
+@media (max-width: 1024px) {
+  .authCard {
+    width: min(920px, 96vw);
+    height: min(520px, 78vh);
+  }
+
+  .authForm {
+    padding: 28px;
+  }
+
+  .imageOverlay {
+    left: 28px;
+    bottom: 28px;
+  }
+
+  .imageHeadline {
+    font-size: 28px;
+  }
+}
+
+/* =========================================================
+   ✅ MOBILE (<= 768px): stack layout + avoid fixed height
+   ========================================================= */
+@media (max-width: 768px) {
+  .authCard {
+    grid-template-columns: 1fr;  /* ✅ one column */
+    height: auto;                /* ✅ remove fixed height */
+    max-height: none;
+  }
+
+  .authImage {
+    height: 180px;               /* ✅ top banner image */
+  }
+
+  .imageOverlay {
+    left: 16px;
+    bottom: 16px;
+  }
+
+  .imageHeadline {
+    font-size: 22px;
+  }
+
+  .imageSub {
+    font-size: 12px;
+  }
+
+  .authForm {
+    padding: 18px;
+  }
+
+  .authTitle {
+    font-size: 22px;
+    margin: 12px 0;
+  }
+
+  .authTabs {
+    gap: 12px;
+    font-size: 12px;
+  }
+}
+
+/* =========================================================
+   ✅ EXTRA SMALL PHONES (<= 420px)
+   ========================================================= */
+@media (max-width: 420px) {
+  .authPage {
+    padding: 12px;
+  }
+
+  .authForm {
+    padding: 16px;
+  }
+
+  .authInput {
+    padding: 11px;
+  }
+
+  .primaryBtn,
+  .secondaryBtn {
+    padding: 12px;
+  }
 }
